@@ -1,0 +1,11 @@
+# Virtual Environment
+.venv/
+
+# Compiled Python files
+__pycache__/
+
+# Database Migrations
+migrations/
+
+# Environment Variables
+.env

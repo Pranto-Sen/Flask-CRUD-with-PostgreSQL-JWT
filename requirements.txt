@@ -1,0 +1,11 @@
+Flask
+Werkzeug
+SQLAlchemy
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-JWT-Extended
+Flask-Bcrypt
+flask-restx
+psycopg2-binary
+flask_mail
+python-dotenv
