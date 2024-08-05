@@ -202,11 +202,12 @@ class ForgotPassword(Resource):
         
         reset_url = url_for('users_reset_password', token=token, _external=True)
         
-        msg = Message('Password Reset Request',
-                      sender='noreply@yourdomain.com',
-                      recipients=[user.email])
-        msg.body = f'To reset your password, visit the following link: {reset_url} OR Paste the token "/reset-password/<token>" route {token}'
-        mail.send(msg)
+        # When using an actual email address and the token is sent to the email address, ensure the following code is uncommented and the mail configuration is correctly set in the .env file.
+        # msg = Message('Password Reset Request',
+        #               sender='noreply@yourdomain.com',
+        #               recipients=[user.email])
+        # msg.body = f'To reset your password, visit the following link: {reset_url} OR Paste the token "/reset-password/<token>" route {token}'
+        # mail.send(msg)
         
         # return {'token': 'If a user with this email exists, a password reset link has been sent.'}, 200
         return {'token': token}, 200
