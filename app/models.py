@@ -18,8 +18,6 @@ class User(db.Model):
     role = db.Column(db.Enum(UserRole), default=UserRole.USER, nullable=False)
     created_at = db.Column(db.DateTime, default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
-    # created_at = db.Column(db.DateTime, default=datetime.now)
-    # updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     is_active = db.Column(db.Boolean, default=True)
 
     def set_password(self, password):  

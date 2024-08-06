@@ -7,13 +7,11 @@ from . import db
 @with_appcontext
 def create_admin():
     try:
-        # Check if an admin already exists
         admin = User.query.filter_by(role=UserRole.ADMIN).first()
         if admin:
             click.echo('An admin already exists. No additional admins will be created.')
             return
 
-        # Prompt for username and password if no admin exists
         username = click.prompt('Enter the username ')
         password = click.prompt('Enter the password ', hide_input=True, confirmation_prompt=True)
 
@@ -21,13 +19,11 @@ def create_admin():
         first_name = click.prompt('Enter the First name ')
         last_name = click.prompt('Enter the Last name ')
 
-        # Check if the username already exists
         user = User.query.filter_by(username=username).first()
         if user:
             click.echo('This username already exists. Try another username.')
             return
 
-        # Create new admin user
         user = User(
             username=username,
             email=email,
@@ -47,5 +43,5 @@ def create_admin():
 def init_cli_commands(app):
     app.cli.add_command(create_admin)
 
-# To create an admin user, run:
-# flask create-admin
+# To create an admin user, run: flask create-admin
+

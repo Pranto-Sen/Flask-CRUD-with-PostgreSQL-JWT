@@ -41,11 +41,6 @@ def create_app(config_class=Config):
     api.init_app(app)
 
     from app.routes.user import user_ns
-    # from app.routes.auth import auth_ns
-    # from app.routes.user import user_ns
-    # api.add_namespace(auth_ns, path='/auth')
-    # api.add_namespace(user_ns, path='/users')
-
 
     api.add_namespace(user_ns, path='/api')
 

@@ -12,7 +12,7 @@ from app.schemas import login_model, register_model, password_reset_request_mode
 serializer = URLSafeTimedSerializer('dummy-secret')
 user_ns = Namespace('users', description='User operations')
 
-# get all user data, only admin can see all data, and a normal user can see only his data
+# Only an admin can view all user data, while a normal user can view only their own data.
 @user_ns.route('/admin/users')
 class UserList(Resource):
     @user_ns.doc(security='Bearer Auth')
@@ -25,10 +25,10 @@ class UserList(Resource):
         if current_user.role == UserRole.ADMIN:
             return User.query.all()
         else:
-            return [current_user]  # Regular users can only see their own data
+            return [current_user]  
 
 
-# specific user info see only user itself or an admin using user id
+# A specific user can view their own information, while an admin can view any user's information using the user ID.
 @user_ns.route('/user/<int:id>')
 class UserResource(Resource):
     @user_ns.doc(security='Bearer Auth')
@@ -44,7 +44,7 @@ class UserResource(Resource):
             user_ns.abort(403, 'Unauthorized to access this user')
         return user
 
-    # specific user update info only user itself or an admin using user id
+    # A specific user can update their own information, while an admin can update any user's information using the user ID
 
     @user_ns.doc(security='Bearer Auth')
     @jwt_required()
@@ -55,19 +55,16 @@ class UserResource(Resource):
         user = User.query.get(id)
         if not user:
             user_ns.abort(404, 'User not found')
-        # Admins can edit their own account or non-admin accounts
         if current_user.id != user.id and (current_user.role != UserRole.ADMIN or user.role == UserRole.ADMIN):
             user_ns.abort(403, 'Unauthorized to edit this user')
         
         data = request.json
         
-        # Check if username is already taken
         if 'username' in data and data['username'] != user.username:
             if User.query.filter_by(username=data['username']).first():
                 user_ns.abort(400, 'Username already exists')
             user.username = data['username']
         
-        # Check if email is already taken
         if 'email' in data and data['email'] != user.email:
             if User.query.filter_by(email=data['email']).first():
                 user_ns.abort(400, 'Email already exists')
@@ -102,24 +99,20 @@ class UserResource(Resource):
         return user
 
     
-    # only admins can delete users
+    # Only admins can delete users
     @user_ns.doc(security='Bearer Auth')
     @jwt_required()
     def delete(self, id):
         current_user = User.query.get(get_jwt_identity())
         user_to_delete = User.query.get(id)
-        # user = User.query.get(id)
         if not user_to_delete:
             user_ns.abort(404, 'User not found')
-        # Only admins can delete users
         if current_user.role != UserRole.ADMIN:
             return {'message': 'Unauthorized. Only admins can delete users.'}, 403
         
-        # Admins cannot delete other admins
         if (user_to_delete.role == UserRole.ADMIN) and (user_to_delete.id != current_user.id):
             return {'message': 'Unauthorized. Cannot delete admin accounts.'}, 403
         
-        # Prevent deleting the last admin
         if current_user.id == id:
             admin_count = User.query.filter_by(role=UserRole.ADMIN).count()
             if admin_count == 1:
@@ -196,13 +189,12 @@ class ForgotPassword(Resource):
         user = User.query.filter_by(email=email).first()
         if not user:
             return {'message': 'Please provide the correct email'}, 200
-            # return {'message': 'If a user with this email exists, a password reset link has been sent.'}, 200
-        
         token = serializer.dumps(user.email, salt='password-reset-salt')
         
         reset_url = url_for('users_reset_password', token=token, _external=True)
         
         # When using an actual email address and the token is sent to the email address, ensure the following code is uncommented and the mail configuration is correctly set in the .env file.
+        
         # msg = Message('Password Reset Request',
         #               sender='noreply@yourdomain.com',
         #               recipients=[user.email])
@@ -210,6 +202,7 @@ class ForgotPassword(Resource):
         # mail.send(msg)
         
         # return {'token': 'If a user with this email exists, a password reset link has been sent.'}, 200
+
         return {'token': token}, 200
 
 
@@ -247,179 +240,9 @@ class ChangePassword(Resource):
         if not user.check_password(data['current_password']):
             return {'message': 'Current password is incorrect'}, 400
         
-        user.set_password(data['new_password'])  # pppp (You, as a coder, manage this)
+        user.set_password(data['new_password'])  
         db.session.commit()
         
         return {'message': 'Password changed successfully'}, 200
-
-
-
-
-# from flask import request
-# from flask_restx import Resource, Namespace
-# from flask_jwt_extended import jwt_required, get_jwt_identity
-# from app import db
-# from app.models import User, UserRole
-# from app.schemas import user_model
-
-# # from werkzeug.exceptions import HTTPException
-# # from sqlalchemy.exc import SQLAlchemyError
-
-# user_ns = Namespace('users', description='User operations')
-
-# # get all user data, only admin can see all data, and a normal user can see only his data
-# @user_ns.route('/')
-# class UserList(Resource):
-#     @user_ns.doc(security='Bearer Auth')
-#     @jwt_required()
-#     @user_ns.marshal_list_with(user_model)
-#     def get(self):
-#         current_user = User.query.get(get_jwt_identity())
-#         if not current_user:
-#             return {'message': 'User not found'}, 404
-#         if current_user.role == UserRole.ADMIN:
-#             return User.query.all()
-#         else:
-#             return [current_user]  # Regular users can only see their own data
-        
-#     # only admin can create user
-#     @user_ns.doc(security='Bearer Auth')
-#     @jwt_required()
-#     @user_ns.expect(user_model)
-#     @user_ns.marshal_with(user_model)
-#     def post(self):
-#         current_user = User.query.get(get_jwt_identity())
-#         if not current_user or current_user.role != UserRole.ADMIN:
-#             return {'message': 'Admin access required'}, 403
-        
-#         data = request.json
-#         new_user = User(
-#             username=data['username'],
-#             first_name=data['first_name'],
-#             last_name=data['last_name'],
-#             email=data['email'],
-#             role=UserRole(data.get('role', UserRole.USER.value)),
-#             is_active=data.get('is_active', True)
-#         )
-#         hardcoded_password = '1234'
-#         new_user.set_password(hardcoded_password)
-#         # new_user.set_password(data['password'])  # Assume you have a set_password method
-#         db.session.add(new_user)
-#         db.session.commit()
-#         return new_user, 201
-    
-# # specific user info see only user itself or an admin using user id
-# @user_ns.route('/<int:id>')
-# class UserResource(Resource):
-#     @user_ns.doc(security='Bearer Auth')
-#     @jwt_required()
-#     @user_ns.marshal_with(user_model)
-#     def get(self, id):
-#         current_user = User.query.get(get_jwt_identity())
-#         user = User.query.get_or_404(id)
-#         if current_user.role != UserRole.ADMIN and current_user.id != id:
-#             # return {'message': 'Unauthorized Access'}, 403
-#              user_ns.abort(403, 'Unauthorized to access this user')
-#         return user
-
-#     # specific user update info only user itself or an admin using user id
-
-#     @user_ns.doc(security='Bearer Auth')
-#     @jwt_required()
-#     @user_ns.expect(user_model)
-#     @user_ns.marshal_with(user_model)
-#     def put(self, id):
-#         current_user = User.query.get(get_jwt_identity())
-#         user = User.query.get_or_404(id)
-        
-#         # Admins can edit their own account or non-admin accounts
-#         if current_user.id != user.id and (current_user.role != UserRole.ADMIN or user.role == UserRole.ADMIN):
-#             user_ns.abort(403, 'Unauthorized to edit this user')
-        
-#         data = request.json
-        
-#         # Check if username is already taken
-#         if 'username' in data and data['username'] != user.username:
-#             if User.query.filter_by(username=data['username']).first():
-#                 user_ns.abort(400, 'Username already exists')
-#             user.username = data['username']
-        
-#         # Check if email is already taken
-#         if 'email' in data and data['email'] != user.email:
-#             if User.query.filter_by(email=data['email']).first():
-#                 user_ns.abort(400, 'Email already exists')
-#             user.email = data['email']
-        
-#         user.first_name = data.get('first_name', user.first_name)
-#         user.last_name = data.get('last_name', user.last_name)
-        
-#         if current_user.role == UserRole.ADMIN and user.role != UserRole.ADMIN:
-#             if 'role' in data:
-#                 try:
-#                     new_role = data['role'].upper()
-#                     if new_role not in UserRole.__members__:
-#                         user_ns.abort(400, f'Invalid role. Valid roles are: {", ".join(UserRole.__members__.keys())}')
-#                     user.role = UserRole[new_role]
-#                 except KeyError:
-#                     user_ns.abort(400, f'Invalid role. Valid roles are: {", ".join(UserRole.__members__.keys())}')
-#             if 'is_active' in data:
-#                 user.is_active = data['is_active']
-#         elif current_user.id != user.id and ('role' in data or 'is_active' in data):
-#             user_ns.abort(403, 'Cannot change role or active status of other admin accounts')
-        
-#         if 'password' in data:
-#             user.set_password(data['password'])
-        
-#         try:
-#             db.session.commit()
-#         except Exception as e:
-#             db.session.rollback()
-#             user_ns.abort(500, f'Error updating user: {str(e)}')
-        
-#         return user
-
-    
-#     # only admins can delete users
-#     @user_ns.doc(security='Bearer Auth')
-#     @jwt_required()
-#     def delete(self, id):
-#         current_user = User.query.get(get_jwt_identity())
-#         user_to_delete = User.query.get_or_404(id)
-        
-#         # Only admins can delete users
-#         if current_user.role != UserRole.ADMIN:
-#             return {'message': 'Unauthorized. Only admins can delete users.'}, 403
-        
-#         # Admins cannot delete other admins
-#         if (user_to_delete.role == UserRole.ADMIN) and (user_to_delete.id != current_user.id):
-#             return {'message': 'Unauthorized. Cannot delete admin accounts.'}, 403
-        
-#         # Prevent deleting the last admin
-#         if current_user.id == id:
-#             admin_count = User.query.filter_by(role=UserRole.ADMIN).count()
-#             if admin_count == 1:
-#                 return {'message': 'Cannot delete the last admin account.'}, 400
-        
-#         try:
-#             db.session.delete(user_to_delete)
-#             db.session.commit()
-#             return {'message': 'User deleted successfully'}, 200
-#         except Exception as e:
-#             db.session.rollback()
-#             return {'message': f'Error deleting user: {str(e)}'}, 500
-
-# @user_ns.route('/<int:id>/make-admin')
-# class MakeAdminResource(Resource):
-#     @user_ns.doc(security='Bearer Auth')
-#     @jwt_required()
-#     def post(self, id):
-#         current_user = User.query.get(get_jwt_identity())
-#         if not current_user or current_user.role != UserRole.ADMIN:
-#             return {'message': 'Admin access required'}, 403
-        
-#         user = User.query.get_or_404(id)
-#         user.role = UserRole.ADMIN
-#         db.session.commit()
-#         return {'message': f'User {user.username} has been made an admin'}, 200
 
 
