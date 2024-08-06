@@ -77,11 +77,6 @@ This project is a user management API built with Flask. It includes authenticati
     This section is for the password reset functionality. It includes a token verification system that sends a token to the user's email. For testing purposes, a dummy email option is available, which returns the token in the response body instead of sending an email. When you use the actual email, the token will be sent to the provided email address. Adjust the configuration accordingly based on whether you're using the dummy email for testing or the actual email for real scenarios.
 
 
-
-5. **Run the application:**
-    ```bash
-    flask run
-    ```
 ## Database Migrations
 
 To manage database migrations, use Flask-Migrate commands:
@@ -100,49 +95,70 @@ To manage database migrations, use Flask-Migrate commands:
     ```bash
     flask db upgrade
     ```
-## CLI Commands
+ ## CLI Commands
 
 - **Create an admin user when first time assign as an admin**
     ```bash
     flask create-admin
+    ```
+    - After running this command in the command line, you will be prompted to provide information such as username, password, email, first name, and last name.
+
+
+- **Run the application:**
+    ```bash
+    flask run
     ```
 
 ## API Endpoints
 
 - **POST `/api/auth/register`**
     - Register a new user
-    - Request body: 
+    - Request body:
+      
       ```json
       {
-          "username": "user1",
+          "username": "john",
           "first_name": "John",
           "last_name": "Doe",
-          "email": "user1@example.com",
-          "password": "password"
-      }
-      ```
-
-- **POST `/api/auth/login`**
-    - Log in a user
-    - **Request Body:**
-      ```json
-      {
-          "username": "user1",
-          "password": "password"
+          "email": "john@example.com",
+          "password": "1234"
       }
       ```
     - **Response:**
+      
+      ```json
+      {
+          "message": "Register Successfully"
+      }
+      ```
+      
+- **POST `/api/auth/login`**
+    - Log in a user
+    - **Request Body:**
+      
+      ```json
+      {
+          "username": "john",
+          "password": "1234"
+      }
+      ```
+    - **Response:**
+      
       After successfully logging in, you will receive an access token. To use this token, enter it in the authorization box, keeping the `Bearer` keyword followed by the access token, for example: `Bearer <access_token>`.
+
 
 - **GET `/api/admin/users`**
     - Get all users (Only an admin can retrieve all users.)
 
+
 - **GET `/api/users/<id>`**
     - Get user by ID ( A user can retrieve only their own profile, while an admin can retrieve any user's profile by user ID.)
 
+
 - **PUT `/api/users/<id>`**
     - Update user by ID (A user can update only their own profile, while an admin can update any user's profile except another admin's profile)
-    - Request body: 
+    - Request body:
+      
       ```json
       {
           "username": "newusername",
@@ -152,33 +168,41 @@ To manage database migrations, use Flask-Migrate commands:
       }
       ```
 
+
 - **DELETE `/api/users/<id>`**
     - Delete user by ID (An admin can delete their own account and other user accounts, but not the accounts of other admins.)
 
+
 - **POST `/api/auth/password-reset-request`**
     - Request a password reset
-    - Request body: 
+    - Request body:
+      
       ```json
       {
-          "email": "user1@example.com"
+          "email": "john@example.com"
       }
       ```
   - **Response:**
+    
       If the email is valid for a registered user, a token will be generated. Use this token to set a new password..
+
 
 - **POST `/api/auth/reset-password/{token}`**
     - put the token 
     - Reset the password
-    - Request body: 
+    - Request body:
+      
       ```json
       {
           "new_password": "newpassword"
       }
       ```
 
+
 - **POST `/api/auth/change-password`**
     - Change the password
-    - Request body: 
+    - Request body:
+      
       ```json
       {
           "current_password": "currentpassword",
